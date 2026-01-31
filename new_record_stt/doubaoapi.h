@@ -24,5 +24,5 @@ private:
     QString OPENAI_MODEL = "doubao-seed-1-8-251228";
 };
 
-#endif // DOUBAOAPI_H 
+#endif // DOUBAOAPI_H
 #pragma once

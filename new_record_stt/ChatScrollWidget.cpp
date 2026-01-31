@@ -32,6 +32,7 @@ ChatScrollWidget::ChatScrollWidget(QWidget* parent) : QWidget(parent)
 
 void ChatScrollWidget::addChatContent(const QString& text, ChatType type)
 {
+    // ========== 修改点1：回答文本先做MD转HTML解析，问题保持原文本 ==========
     QString showText = text;
     if (type == ChatType::Answer) {
         // ========== 替换为Qt原生MD转HTML，删除之前的自定义mdToHtml ==========
@@ -41,6 +42,7 @@ void ChatScrollWidget::addChatContent(const QString& text, ChatType type)
     QWidget* chatWidget = createChatWidget(showText, type);
     m_mainLayout->addWidget(chatWidget);
 
+    // 2. 自动滚动到底部（关键：展示最新内容）
     QScrollBar* vScrollBar = m_scrollArea->verticalScrollBar();
     vScrollBar->setValue(vScrollBar->maximum());
 }
@@ -195,5 +197,18 @@ QString ChatScrollWidget::mdToHtmlByQt(const QString& mdText)
     doc.setMarkdown(mdText, QTextDocument::MarkdownDialectGitHub);
     // 转为标准HTML，直接用于QTextEdit::setHtml
     return doc.toHtml();
-}
+            }
+            else {
+                htmlTable += QString("<td>%1</td>").arg(cellContent);
+            }
+        }
+        htmlTable += "</tr>";
+        isHeader = false; // 第一行之后都是内容行
+    }
 
+    htmlTable += "</table>";
+
+    // 替换原表格块为HTML表格
+    mdTextCopy.replace(tableLines.join("\n"), htmlTable);
+    return mdTextCopy;
+}
