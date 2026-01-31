@@ -196,4 +196,3 @@ QString ChatScrollWidget::mdToHtmlByQt(const QString& mdText)
     // 转为标准HTML，直接用于QTextEdit::setHtml
     return doc.toHtml();
 }
-
