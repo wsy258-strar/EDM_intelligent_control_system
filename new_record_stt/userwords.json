@@ -1,0 +1,23 @@
+{"userword":[
+{"words":["ON","放电脉冲时间"],"name":"ON"},
+{"words":["OFF","放电休止时间"],"name":"OFF"},
+{"words":["IP","主电源低压电流峰值"],"name":"IP"},
+{"words":["PL","Z 轴的极性"],"name":"PL"},
+{"words":["V","主电源电压"],"name":"V"},
+{"words":["HP","辅助电源回路控制"],"name":"HP"},
+{"words":["PP","PIKA DEN","脉冲电流波形控制"],"name":"PP"},
+{"words":["AL","异常放电检验标准"],"name":"AL"},
+{"words":["OC","ON CUT","控制标准"],"name":"OC"},
+{"words":["LD","ON/OFF","控制速度的调整"],"name":"LD"},
+{"words":["MU","放电休止时间的调整"],"name":"MU"},
+{"words":["GAP","伺服基准电压"],"name":"GAP"},
+{"words":["UP","跳度上升时间"],"name":"UP"},
+{"words":["DN","跳度放电时间"],"name":"DN"},
+{"words":["CA","极间电容器回路"],"name":"CA"},
+{"words":["S","伺服速度"],"name":"S"},
+{"words":["LN","摇动轨迹形状的选择"],"name":"LN"},
+{"words":["STEP","摇动动作时离开加工轴中心的偏心距"],"name":"STEP"},
+{"words":["L","摇动速度"],"name":"L"},
+{"words":["LP","象限摇动轨迹的形状"],"name":"LP"},
+{"words":["e130","130"],"name":"130"}
+]}
