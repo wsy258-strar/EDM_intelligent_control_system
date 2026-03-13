@@ -38,11 +38,15 @@ signals:
 public slots:
     void onRadioButtonClicked();
     void onRecordingFinished();
+    void onSaveCSV_clicked();
     QString onGetText(); // 新增槽函数声明
     //QString onGetText2(); // 新增槽函数声明
     void doubaoAnswer();
     void changeArguments();
     void adjustParameters(const QString& findname, int & judge);
+    bool applyParameters(); //应用参数
+    bool saveToFile(const QString& filePath); //将组合的参数保存为excel文件
+    bool execute_Parameters();
 
 
 private:
@@ -52,11 +56,26 @@ private:
     QString inputText; //输入文本
     QString m_findname; //参数匹配关键字
     int m_judge; //高低匹配关键字
-    ON* on;
-    OFF* off;
-    IP* ip;
-    V* v;
-    MU* mu;
+    ON* on = nullptr;
+    OFF* off = nullptr;
+    IP* ip = nullptr;
+    PL* pl = nullptr;
+    V* v = nullptr;
+    HP* hp = nullptr;
+    PP* pp = nullptr;
+    AL* al = nullptr;
+    OC* oc = nullptr;
+    LD* ld = nullptr;
+    MU* mu = nullptr;
+    GAP* gap = nullptr;
+    UP* up = nullptr;
+    DN* dn = nullptr;
+    CA* ca = nullptr;
+    S* s = nullptr;
+    LN* ln = nullptr;
+    STEP* step = nullptr;
+    L* l = nullptr;
+    MyLP* mylp = nullptr;
 
 };
 

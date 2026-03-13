@@ -1,6 +1,6 @@
-
+ï»¿
 /*
-* ÓïÒôÌıĞ´(iFly Auto Transform)¼¼ÊõÄÜ¹»ÊµÊ±µØ½«ÓïÒô×ª»»³É¶ÔÓ¦µÄÎÄ×Ö¡£
+* è¯­éŸ³å¬å†™(iFly Auto Transform)æŠ€æœ¯èƒ½å¤Ÿå®æ—¶åœ°å°†è¯­éŸ³è½¬æ¢æˆå¯¹åº”çš„æ–‡å­—ã€‚
 */
 
 #include "new_record_stt.h"
@@ -22,6 +22,12 @@
 #include "doubaoapi.h"
 #include <QMessageBox>
 #include <QTimer>
+#include <QFile>
+#include <QTextStream>
+#include <QFileDialog>
+#include <QComboBox>
+#include <QSpinBox>
+#include <QDoubleSpinBox>
 
 
 
@@ -51,7 +57,7 @@ static HANDLE events[EVT_TOTAL] = { NULL,NULL,NULL };
 static COORD begin_pos = { 0, 0 };
 static COORD last_pos = { 0, 0 };
 
- //×Ö·û±àÂë¸ñÊ½×ª»»
+ //å­—ç¬¦ç¼–ç æ ¼å¼è½¬æ¢
 string GbkToUtf8(const char* src_str)
 {
 	int len = MultiByteToWideChar(CP_ACP, 0, src_str, -1, NULL, 0);
@@ -92,7 +98,7 @@ static void show_result(char* string, char is_over)
 	GetConsoleScreenBufferInfo(w, &info);
 	last_pos = info.dwCursorPosition;
 }
-//ÓÃ»§ÌáÊ¾
+//ç”¨æˆ·æç¤º
 //static void show_key_hints(void)
 //{
 //	printf("\n\
@@ -103,7 +109,7 @@ static void show_result(char* string, char is_over)
 //----------------------------\n");
 //}
 
-/* ÉÏ´«ÓÃ»§´Ê±í */
+/* ä¸Šä¼ ç”¨æˆ·è¯è¡¨ */
 static int upload_userwords()
 {
 	char* userwords = NULL;
@@ -120,7 +126,7 @@ static int upload_userwords()
 	}
 
 	fseek(fp, 0, SEEK_END);
-	len = ftell(fp); //»ñÈ¡ÎÄ¼ş´óĞ¡
+	len = ftell(fp); //è·å–æ–‡ä»¶å¤§å°
 	fseek(fp, 0, SEEK_SET);
 
 	userwords = (char*)malloc(len + 1);
@@ -130,7 +136,7 @@ static int upload_userwords()
 		goto upload_exit;
 	}
 
-	read_len = fread((void*)userwords, 1, len, fp); //¶ÁÈ¡ÓÃ»§´Ê±íÄÚÈİ
+	read_len = fread((void*)userwords, 1, len, fp); //è¯»å–ç”¨æˆ·è¯è¡¨å†…å®¹
 	if (read_len != len)
 	{
 		printf("\nread [userwords.txt] failed!\n");
@@ -138,7 +144,7 @@ static int upload_userwords()
 	}
 	userwords[len] = '\0';
 
-	MSPUploadData("userwords", userwords, len, "sub = uup, dtt = userword", &ret); //ÉÏ´«ÓÃ»§´Ê±í
+	MSPUploadData("userwords", userwords, len, "sub = uup, dtt = userword", &ret); //ä¸Šä¼ ç”¨æˆ·è¯è¡¨
 	if (MSP_SUCCESS != ret)
 	{
 		printf("\nMSPUploadData failed ! errorCode: %d \n", ret);
@@ -163,7 +169,7 @@ upload_exit:
 static char* g_result = NULL;
 static unsigned int g_buffersize = BUFFER_SIZE;
 
-//Õ¹Ê¾¶ÁÈ¡½á¹û
+//å±•ç¤ºè¯»å–ç»“æœ
 void on_result(const char* result, char is_last)
 {
 	if (result) {
@@ -186,7 +192,7 @@ void on_result(const char* result, char is_last)
 	}
 }
 
-//¿ªÊ¼¼àÌı
+//å¼€å§‹ç›‘å¬
 void on_speech_begin()
 {
 	if (g_result)
@@ -201,7 +207,7 @@ void on_speech_begin()
 
 }
 
-//¼àÌı½áÊø
+//ç›‘å¬ç»“æŸ
 void on_speech_end(int reason)
 {
 	if (reason == END_REASON_VAD_DETECT)
@@ -210,7 +216,7 @@ void on_speech_end(int reason)
 		qDebug() << ("\nRecognizer error %d\n", reason);
 }
 
-/* ´ÓÎÄ¼ş¶ÁÈ¡ÒôÆµ */
+/* ä»æ–‡ä»¶è¯»å–éŸ³é¢‘ */
 static void demo_file(const char* audio_file, const char* session_begin_params)
 {
 	unsigned int	total_len = 0;
@@ -238,7 +244,7 @@ static void demo_file(const char* audio_file, const char* session_begin_params)
 	}
 
 	fseek(f_pcm, 0, SEEK_END);
-	pcm_size = ftell(f_pcm); //»ñÈ¡ÒôÆµÎÄ¼ş´óĞ¡ 
+	pcm_size = ftell(f_pcm); //è·å–éŸ³é¢‘æ–‡ä»¶å¤§å° 
 	fseek(f_pcm, 0, SEEK_SET);
 
 	p_pcm = (char*)malloc(pcm_size);
@@ -248,7 +254,7 @@ static void demo_file(const char* audio_file, const char* session_begin_params)
 		goto iat_exit;
 	}
 
-	read_size = fread((void*)p_pcm, 1, pcm_size, f_pcm); //¶ÁÈ¡ÒôÆµÎÄ¼şÄÚÈİ
+	read_size = fread((void*)p_pcm, 1, pcm_size, f_pcm); //è¯»å–éŸ³é¢‘æ–‡ä»¶å†…å®¹
 	if (read_size != pcm_size)
 	{
 		printf("\nread [%s] error!\n", audio_file);
@@ -269,7 +275,7 @@ static void demo_file(const char* audio_file, const char* session_begin_params)
 
 	while (1)
 	{
-		unsigned int len = 10 * FRAME_LEN; // Ã¿´ÎĞ´Èë200msÒôÆµ(16k£¬16bit)£º1Ö¡ÒôÆµ20ms£¬10Ö¡=200ms¡£16k²ÉÑùÂÊµÄ16Î»ÒôÆµ£¬Ò»Ö¡µÄ´óĞ¡Îª640Byte
+		unsigned int len = 10 * FRAME_LEN; // æ¯æ¬¡å†™å…¥200mséŸ³é¢‘(16kï¼Œ16bit)ï¼š1å¸§éŸ³é¢‘20msï¼Œ10å¸§=200msã€‚16ké‡‡æ ·ç‡çš„16ä½éŸ³é¢‘ï¼Œä¸€å¸§çš„å¤§å°ä¸º640Byte
 		int ret = 0;
 
 		if (pcm_size < 2 * len)
@@ -312,7 +318,7 @@ iat_exit:
 	sr_uninit(&iat);
 }
 
-/* ´ÓÂó¿Ë·ç¶ÁÈ¡ÒôÆµ */
+/* ä»éº¦å…‹é£è¯»å–éŸ³é¢‘ */
 static void demo_mic(const char* session_begin_params, volatile bool* stopped)
 {
 	int errcode;
@@ -388,50 +394,50 @@ void MicThread::run()
 }
 
 
-//Æ¥Åä²ÎÊı¹Ø¼ü×Ö
+//åŒ¹é…å‚æ•°å…³é”®å­—
 QString findNameByWord(const QString& sttText)
 {
 
 	std::ifstream file;
 	file.open("C:\\Users\\32284\\source\\repos\\new_record_stt\\new_record_stt\\userwords.json");
 	if (!file.is_open()) {
-		//return QString("ÎÄ¼ş´ò¿ªÊ§°Ü: ÎŞ·¨´ò¿ªÎÄ¼ş userwords.json");
-		QMessageBox::warning(nullptr, "ÕıÈ·", "ÎÄ¼ş´ò¿ª³É¹¦: userwords.json");
+		//return QString("æ–‡ä»¶æ‰“å¼€å¤±è´¥: æ— æ³•æ‰“å¼€æ–‡ä»¶ userwords.json");
+		QMessageBox::warning(nullptr, "æ­£ç¡®", "æ–‡ä»¶æ‰“å¼€æˆåŠŸ: userwords.json");
 	}
 
 	if (!file.is_open()) {
-		//return QString("ÎÄ¼ş´ò¿ªÊ§°Ü: ÎŞ·¨´ò¿ªÎÄ¼ş userwords.json");
-		QMessageBox::warning(nullptr, "´íÎó", "ÎÄ¼ş´ò¿ªÊ§°Ü: ÎŞ·¨´ò¿ªÎÄ¼ş userwords.json");
+		//return QString("æ–‡ä»¶æ‰“å¼€å¤±è´¥: æ— æ³•æ‰“å¼€æ–‡ä»¶ userwords.json");
+		QMessageBox::warning(nullptr, "é”™è¯¯", "æ–‡ä»¶æ‰“å¼€å¤±è´¥: æ— æ³•æ‰“å¼€æ–‡ä»¶ userwords.json");
 	}
 
-	// ¶ÁÈ¡ÎÄ¼şÄÚÈİ
+	// è¯»å–æ–‡ä»¶å†…å®¹
 	std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 	file.close();
 
-	// ½âÎö JSON Êı¾İ
+	// è§£æ JSON æ•°æ®
 	json data;
 	try {
 		data = json::parse(content);
 	}
 	catch (json::parse_error& e) {
-		//QMessageBox::warning(nullptr, "´íÎó", "JSON ½âÎö´íÎó");
-		qDebug() << QString("JSON ½âÎö´íÎó");
-		//return QString("JSON ½âÎö´íÎó: ") + QString(e.what());
+		//QMessageBox::warning(nullptr, "é”™è¯¯", "JSON è§£æé”™è¯¯");
+		qDebug() << QString("JSON è§£æé”™è¯¯");
+		//return QString("JSON è§£æé”™è¯¯: ") + QString(e.what());
 	}
 
-	// ¼ì²é "userword" ÊÇ·ñ´æÔÚÇÒÊÇÒ»¸öÊı×é
+	// æ£€æŸ¥ "userword" æ˜¯å¦å­˜åœ¨ä¸”æ˜¯ä¸€ä¸ªæ•°ç»„
 	if (!data.contains("userword") || !data["userword"].is_array()) {
-		//QMessageBox::warning(nullptr, "´íÎó", "JSON ¸ñÊ½²»ÕıÈ·");
-		qDebug() << QString("JSON ¸ñÊ½²»ÕıÈ·");
-		//return QString("JSON ¸ñÊ½²»ÕıÈ·");
+		//QMessageBox::warning(nullptr, "é”™è¯¯", "JSON æ ¼å¼ä¸æ­£ç¡®");
+		qDebug() << QString("JSON æ ¼å¼ä¸æ­£ç¡®");
+		//return QString("JSON æ ¼å¼ä¸æ­£ç¡®");
 	}
 
 	QByteArray sttTextUtf = sttText.toUtf8();
 	string sttTextUtf8 = sttTextUtf.toStdString();
-	// ±éÀú "userword" Êı×é
+	// éå† "userword" æ•°ç»„
 	for (const auto& item : data["userword"]) {
 		if (item.contains("words") && item["words"].is_array() && item.contains("name") && item["name"].is_string()) {
-			// ¼ì²é "words" Êı×éÖĞµÄÃ¿¸ö×Ö·û´®
+			// æ£€æŸ¥ "words" æ•°ç»„ä¸­çš„æ¯ä¸ªå­—ç¬¦ä¸²
 			for (const auto& word : item["words"]) {
 
 				if (sttTextUtf8.find(word.get<std::string>()) != string::npos) { //
@@ -443,26 +449,26 @@ QString findNameByWord(const QString& sttText)
 	}
 
 
-	//QMessageBox::warning(nullptr, "´íÎó", "Î´ÕÒµ½Æ¥Åä,ÇëÄúÖØĞÂÊäÈë");
-	qDebug() << QString("Î´ÕÒµ½Æ¥Åä,ÇëÄúÖØĞÂÊäÈë");
+	//QMessageBox::warning(nullptr, "é”™è¯¯", "æœªæ‰¾åˆ°åŒ¹é…,è¯·æ‚¨é‡æ–°è¾“å…¥");
+	qDebug() << QString("æœªæ‰¾åˆ°åŒ¹é…,è¯·æ‚¨é‡æ–°è¾“å…¥");
 	return QString("Unknown");
 
 
 }
 
-//Æ¥Åäµ÷¸ß»òÕßµ÷µÍ¹Ø¼ü×Ö
+//åŒ¹é…è°ƒé«˜æˆ–è€…è°ƒä½å…³é”®å­—
 int judge_word(QString& s)
 {
-	// ¼ì²é×Ö·û´®ÖĞÊÇ·ñ°üº¬¡°¸ß¡±
+	// æ£€æŸ¥å­—ç¬¦ä¸²ä¸­æ˜¯å¦åŒ…å«â€œé«˜â€
 	if (s.contains("\u9ad8")) {
 		return 1;
 	}
-	// ¼ì²é×Ö·û´®ÖĞÊÇ·ñ°üº¬¡°µÍ¡±
+	// æ£€æŸ¥å­—ç¬¦ä¸²ä¸­æ˜¯å¦åŒ…å«â€œä½â€
 	else if (s.contains("\u4f4e")) {
 		return -1;
 	}
 	else {
-		qDebug() << QString("×Ö·û´®ÖĞÎŞµ÷½Ú²ÎÊı£¬ÇëÖØĞÂÊäÈë£¡");
+		qDebug() << QString("å­—ç¬¦ä¸²ä¸­æ— è°ƒèŠ‚å‚æ•°ï¼Œè¯·é‡æ–°è¾“å…¥ï¼");
 		return 0;
 	}
 }
@@ -474,15 +480,30 @@ new_record_stt::new_record_stt(QWidget *parent) :
 	m_micThread(nullptr),
 	on(new ON(0)),
 	off(new OFF(0)),
-	ip(new IP(0)),
+	ip(new IP(0.0)),
+	pl(new PL('+')),  // charç±»å‹ç”¨ç©ºå­—ç¬¦'\0'åˆå§‹åŒ–ï¼Œæ¯”0æ›´è§„èŒƒ
 	v(new V(0)),
-	mu(new MU(0))
+	hp(new HP(0)),
+	pp(new PP(0)),
+	al(new AL(0)),
+	oc(new OC(0)),
+	ld(new LD(0)),
+	mu(new MU(0)),
+	gap(new GAP(0)),
+	up(new UP(0)),
+	dn(new DN(0)),
+	ca(new CA(0)),
+	s(new S(0)),
+	ln(new LN(0)),
+	step(new STEP(0)),
+	l(new L(0)),
+	mylp(new MyLP(0))   // MyLPæ— æ˜¾å¼æ„é€ å‡½æ•°ï¼Œå…ˆnewå†èµ‹å€¼
 {
     ui.setupUi(this);
 	int			ret = MSP_SUCCESS;
-	int			upload_on = 1; //ÊÇ·ñÉÏ´«ÓÃ»§´Ê±í
-	const char* login_params = "appid = 8257763a, work_dir = ."; // µÇÂ¼²ÎÊı£¬appidÓëmsc¿â°ó¶¨,ÇëÎğËæÒâ¸Ä¶¯
-	int aud_src = 1; //´ÓÂó¿Ë·ç¶ÁÈ¡
+	int			upload_on = 1; //æ˜¯å¦ä¸Šä¼ ç”¨æˆ·è¯è¡¨
+	const char* login_params = "appid = 8257763a, work_dir = ."; // ç™»å½•å‚æ•°ï¼Œappidä¸mscåº“ç»‘å®š,è¯·å‹¿éšæ„æ”¹åŠ¨
+	int aud_src = 1; //ä»éº¦å…‹é£è¯»å–
 	m_findname = NULL;
 	m_judge = 0;
 	inputText = NULL;
@@ -491,43 +512,38 @@ new_record_stt::new_record_stt(QWidget *parent) :
 
 	qDebug() << "getReasult function entered";
 
-	//on = new ON(0);
-	//off = new OFF(0);
-	//ip = new IP(0);
-	//v = new V(0);
-	//mu = new MU(0);
 	/*
-	* sub:				ÇëÇóÒµÎñÀàĞÍ
-	* domain:			ÁìÓò
-	* language:			ÓïÑÔ
-	* accent:			·½ÑÔ
-	* sample_rate:		ÒôÆµ²ÉÑùÂÊ
-	* result_type:		Ê¶±ğ½á¹û¸ñÊ½
-	* result_encoding:	½á¹û±àÂë¸ñÊ½
+	* sub:				è¯·æ±‚ä¸šåŠ¡ç±»å‹
+	* domain:			é¢†åŸŸ
+	* language:			è¯­è¨€
+	* accent:			æ–¹è¨€
+	* sample_rate:		éŸ³é¢‘é‡‡æ ·ç‡
+	* result_type:		è¯†åˆ«ç»“æœæ ¼å¼
+	* result_encoding:	ç»“æœç¼–ç æ ¼å¼
 	*
 	*/
 
-	// ³õÊ¼»¯eventsÊÂ¼ş±êÖ¾
+	// åˆå§‹åŒ–eventsäº‹ä»¶æ ‡å¿—
 	for (int i = 0; i < EVT_TOTAL; ++i) {
 		events[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
 	}
 
 
-	/* ÓÃ»§µÇÂ¼ */
-	ret = MSPLogin(NULL, NULL, login_params); //µÚÒ»¸ö²ÎÊıÊÇÓÃ»§Ãû£¬µÚ¶ş¸ö²ÎÊıÊÇÃÜÂë£¬¾ù´«NULL¼´¿É£¬µÚÈı¸ö²ÎÊıÊÇµÇÂ¼²ÎÊı	
+	/* ç”¨æˆ·ç™»å½• */
+	ret = MSPLogin(NULL, NULL, login_params); //ç¬¬ä¸€ä¸ªå‚æ•°æ˜¯ç”¨æˆ·åï¼Œç¬¬äºŒä¸ªå‚æ•°æ˜¯å¯†ç ï¼Œå‡ä¼ NULLå³å¯ï¼Œç¬¬ä¸‰ä¸ªå‚æ•°æ˜¯ç™»å½•å‚æ•°	
 	if (MSP_SUCCESS != ret) {
 		qDebug() << "MSPLogin failed, Error code" << ret;
-		QMessageBox::critical(this, "´íÎó", "ÓïÒôÊ¶±ğ³õÊ¼»¯Ê§°Ü£¬Çë¼ì²éÅäÖÃ¡£");
-		ui.radioButton->setEnabled(false); // ½ûÓÃ°´Å¥ÒÔ·ÀÖ¹ºóĞø²Ù×÷
+		QMessageBox::critical(this, "é”™è¯¯", "è¯­éŸ³è¯†åˆ«åˆå§‹åŒ–å¤±è´¥ï¼Œè¯·æ£€æŸ¥é…ç½®ã€‚");
+		ui.radioButton->setEnabled(false); // ç¦ç”¨æŒ‰é’®ä»¥é˜²æ­¢åç»­æ“ä½œ
 	}
 	else {
-		m_micThread = new MicThread(session_begin_params, this); // ½öÔÚ³É¹¦Ê±³õÊ¼»¯
+		m_micThread = new MicThread(session_begin_params, this); // ä»…åœ¨æˆåŠŸæ—¶åˆå§‹åŒ–
 	}
 
 	qDebug() << ("\n########################################################################\n");
 	qDebug() << QString("## The iFly Auto Transform technology can convert speech into corresponding text in real time.##\n");
 	qDebug() << ("########################################################################\n\n");
-	//qDebug() << ("ÑİÊ¾Ê¾ÀıÑ¡Ôñ:ÊÇ·ñÉÏ´«ÓÃ»§´Ê±í£¿\n0:²»Ê¹ÓÃ\n1:Ê¹ÓÃ\n");
+	//qDebug() << ("æ¼”ç¤ºç¤ºä¾‹é€‰æ‹©:æ˜¯å¦ä¸Šä¼ ç”¨æˆ·è¯è¡¨ï¼Ÿ\n0:ä¸ä½¿ç”¨\n1:ä½¿ç”¨\n");
 
 	//scanf("%d", &upload_on);
 	if (upload_on)
@@ -539,17 +555,35 @@ new_record_stt::new_record_stt(QWidget *parent) :
 		qDebug() << QString("sending User dictionary succeed!\n");
 	}
 
-    ui.m_ON->setText(QString::number(on->getON())); 
-	ui.m_OFF->setText(QString::number(off->getOFF()));
-	ui.m_IP->setText(QString::number(ip->getIP()));
-	ui.m_V->setText(QString::number(v->getV()));
-	ui.m_MU->setText(QString::number(mu->getMU()));
+	ui.m_ON_value->setText(QString::number(on->getON()));
+	ui.m_OFF_value->setText(QString::number(off->getOFF()));
+	ui.m_PL_value->setText(QString(pl->getPL()));
+	ui.m_V_value->setText(QString::number(v->getV()));
+	ui.m_HP_value->setText(QString::number(hp->getHP()));
+	ui.m_PP_value->setText(QString::fromStdString(pp->getPPDisplay()));
+	ui.m_AL_value->setText(QString::number(al->getAL()));
+	ui.m_OC_value->setText(QString::number(oc->getOC()));
+	ui.m_LD_value->setText(QString::number(ld->getLD()));
+	ui.m_MU_value->setText(QString::number(mu->getMU()));
+	ui.m_GAP_value->setText(QString::number(gap->getGAP()));
+	ui.m_UP_value->setText(QString::number(up->getUP()));
+	ui.m_DN_value->setText(QString::number(dn->getDN()));
+	ui.m_CA_value->setText(QString::number(ca->getCA()));
+	ui.m_S_value->setText(QString::number(s->getS()));
+	ui.m_LN_value->setText(QString::number(ln->getLN()));
+	ui.m_STEP_value->setText(QString::number(step->getSTEP()));
+	ui.m_L_value->setText(QString::number(l->getL()));
+	ui.m_MyLP_value->setText(QString::number(mylp->getLP()));
 
-	//³õÊ¼»¯eventsÊÂ¼ş±êÖ¾
+	// ========== doubleç±»å‹å‚æ•°ï¼ˆå¯é€‰ä¿ç•™å°æ•°ä½æ•°ï¼Œç¤ºä¾‹ä¿ç•™2ä½ï¼‰ ==========
+	ui.m_IP_value->setText(QString::number(ip->getIP(), 'f', 2));
+
+
+	//åˆå§‹åŒ–eventsäº‹ä»¶æ ‡å¿—
 	for (int i = 0; i < EVT_TOTAL; ++i) {
 		events[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
 	}
-	// Á¬½Ó°´Å¥µÄ clicked ĞÅºÅµ½²Ûº¯Êı
+	// è¿æ¥æŒ‰é’®çš„ clicked ä¿¡å·åˆ°æ§½å‡½æ•°
 	//connect(ui.m_affirm_pushButton, &QPushButton::clicked, this, &new_record_stt::onGetText);
 	//connect(ui.pushButton_2, &QPushButton::clicked, this, &new_record_stt::onGetText2);
 	connect(ui.radioButton, &QRadioButton::clicked, this, &new_record_stt::onRadioButtonClicked);
@@ -561,9 +595,14 @@ new_record_stt::new_record_stt(QWidget *parent) :
 	//connect(ui.pushButton_2, &QPushButton::clicked, this, &new_record_stt::changeArguments);
 	connect(ui.radioButton, &QRadioButton::clicked, this, &new_record_stt::changeArguments);
 
+	connect(ui.m_Save_Parameters_Button, &QPushButton::clicked, this, &new_record_stt::onSaveCSV_clicked);
+	//connect(ui.m_Apply_Parameters_Button, &QPushButton::clicked, this, &new_record_stt::applyParameters);
+	//connect(ui.m_Execute_Button, &QPushButton::clicked, this, &new_record_stt::execute_Parameters);
 
 
-	// ÔÚ½çÃæÏÔÊ¾ºóÑÓ³ÙÒ»¶ÎÊ±¼äµ÷ÓÃ 
+
+
+	// åœ¨ç•Œé¢æ˜¾ç¤ºåå»¶è¿Ÿä¸€æ®µæ—¶é—´è°ƒç”¨ 
 	QTimer::singleShot(1000, this, &new_record_stt::changeArguments);
 	//HANDLE helperThread = start_helper_thread(this);
 
@@ -576,10 +615,10 @@ new_record_stt::new_record_stt(QWidget *parent) :
 
 
 void new_record_stt::onRecordingFinished() {
-	qDebug() << "isRecording:" << isRecording << "g_result:" << g_result; // ĞÂÔö´òÓ¡
+	qDebug() << "isRecording:" << isRecording << "g_result:" << g_result; // æ–°å¢æ‰“å°
 	ui.m_input_textEdit->setText(QString("no g_result..."));
 	if (!isRecording) {
-		// Èç¹ûÂ¼ÒôÒÑÍ£Ö¹£¬ÏÔÊ¾Ê¶±ğ½á¹û
+		// å¦‚æœå½•éŸ³å·²åœæ­¢ï¼Œæ˜¾ç¤ºè¯†åˆ«ç»“æœ
 		if (g_result) {
 			ui.m_input_textEdit->setText(QString::fromLocal8Bit(g_result));
 		}
@@ -588,7 +627,7 @@ void new_record_stt::onRecordingFinished() {
 		}
 	}
 	else {
-		// Èç¹ûÕıÔÚÂ¼Òô£¬ÏÔÊ¾ÌáÊ¾ĞÅÏ¢
+		// å¦‚æœæ­£åœ¨å½•éŸ³ï¼Œæ˜¾ç¤ºæç¤ºä¿¡æ¯
 		ui.m_input_textEdit->setText(QString("recording..."));
 	}
 }
@@ -598,8 +637,8 @@ void new_record_stt::onRadioButtonClicked()
 {
 	if (!isRecording) {
 		if (m_micThread == nullptr) {
-			qDebug() << "ÎŞ·¨Æô¶¯Âó¿Ë·çÏß³Ì£¬ÒòÎª³õÊ¼»¯Ê§°Ü¡£";
-			//QMessageBox::warning(this, "¾¯¸æ", "ÓÉÓÚ³õÊ¼»¯Ê§°Ü£¬Âó¿Ë·çÏß³Ì²»¿ÉÓÃ¡£");
+			qDebug() << "æ— æ³•å¯åŠ¨éº¦å…‹é£çº¿ç¨‹ï¼Œå› ä¸ºåˆå§‹åŒ–å¤±è´¥ã€‚";
+			//QMessageBox::warning(this, "è­¦å‘Š", "ç”±äºåˆå§‹åŒ–å¤±è´¥ï¼Œéº¦å…‹é£çº¿ç¨‹ä¸å¯ç”¨ã€‚");
 			return;
 		}
 		isRecording = true;
@@ -617,21 +656,28 @@ void new_record_stt::onRadioButtonClicked()
 	
 }
 
-//»ñÈ¡ÎÄ±¾¿òÄÚÈİ£¬ÏÖÒÑ·ÏÆú
+void new_record_stt::onSaveCSV_clicked() {
+	QString filePath = QFileDialog::getSaveFileName(this, "ä¿å­˜å‚æ•°", "./params.csv", "CSVæ–‡ä»¶ (*.csv)");
+	if (!filePath.isEmpty()) {
+		saveToFile(filePath);
+	}
+}
+
+//è·å–æ–‡æœ¬æ¡†å†…å®¹ï¼Œç°å·²åºŸå¼ƒ
 QString new_record_stt::onGetText()
 {
-	// »ñÈ¡ QTextEdit ÖĞµÄÎÄ±¾
+	// è·å– QTextEdit ä¸­çš„æ–‡æœ¬
 	QString text = ui.m_input_textEdit->toPlainText();
 
 	if (!text.isEmpty()) {
-		// ui.chatScrollWidget ÊÇ×Ô¶¯Éú³ÉµÄÖ¸Õë£¬Ö±½Óµ÷ÓÃaddChatContent
-		// ÀàĞÍÎªChatType::Question£¨ÓÃ»§ÎÊÌâ£©
+		// ui.chatScrollWidget æ˜¯è‡ªåŠ¨ç”Ÿæˆçš„æŒ‡é’ˆï¼Œç›´æ¥è°ƒç”¨addChatContent
+		// ç±»å‹ä¸ºChatType::Questionï¼ˆç”¨æˆ·é—®é¢˜ï¼‰
 		ui.chatScrollWidget->addChatContent(text, ChatType::Question);
 	}
 	return text;
 }
 
-////´óÄ£ĞÍ»Ø¸´
+////å¤§æ¨¡å‹å›å¤
 //QString new_record_stt::onGetText2()
 //{
 //
@@ -642,7 +688,7 @@ QString new_record_stt::onGetText()
 
 void new_record_stt::doubaoAnswer() {
 	QString text = ui.m_input_textEdit->toPlainText();
-	ui.m_input_textEdit->clear(); //Çå³ıÊäÈë¿òÄÚÈİ
+	ui.m_input_textEdit->clear(); //æ¸…é™¤è¾“å…¥æ¡†å†…å®¹
 	QString answer = doubao.DoubaoAI_request(text);
 	ui.chatScrollWidget->addChatContent(answer, ChatType::Answer);
 	qDebug() << "Answer:" << answer;
@@ -653,35 +699,35 @@ void new_record_stt::doubaoAnswer() {
 void new_record_stt::changeArguments()
 {
 
-	// ÅĞ¶ÏÎÄ×ÖÊäÈë¿òÊÇ·ñÓĞÊäÈë
+	// åˆ¤æ–­æ–‡å­—è¾“å…¥æ¡†æ˜¯å¦æœ‰è¾“å…¥
 	if (!ui.m_input_textEdit->toPlainText().isEmpty()) {
-		// Ö´ĞĞÎÄ×ÖÊäÈëÏà¹ØµÄ²Ù×÷
+		// æ‰§è¡Œæ–‡å­—è¾“å…¥ç›¸å…³çš„æ“ä½œ
 		inputText = onGetText();
 		qDebug() << "Text input:" << inputText;
 		// 
 		m_findname = findNameByWord(inputText);
-		// Ñ°ÕÒÆ¥ÅäµÄ²ÎÊı
+		// å¯»æ‰¾åŒ¹é…çš„å‚æ•°
 		qDebug() << QString("m_findname:") << m_findname;
-		//ÅĞ¶Ïµ÷¸ß»¹ÊÇµ÷µÍ
+		//åˆ¤æ–­è°ƒé«˜è¿˜æ˜¯è°ƒä½
 		m_judge = judge_word(inputText);
 		qDebug() << QString("m_judge:") << m_judge;
 	}
 	else if (!ui.m_input_textEdit->toPlainText().isEmpty()) {
-		// ÅĞ¶ÏÓïÒôÊäÈë¿òÊÇ·ñÓĞÊäÈë
+		// åˆ¤æ–­è¯­éŸ³è¾“å…¥æ¡†æ˜¯å¦æœ‰è¾“å…¥
 		//text = onGetText2();
 		inputText = ui.m_input_textEdit->toPlainText();
 
 		qDebug() << "Voice input:" << inputText;
 		// 
 		m_findname = findNameByWord(inputText);
-		// Ñ°ÕÒÆ¥ÅäµÄ²ÎÊı
+		// å¯»æ‰¾åŒ¹é…çš„å‚æ•°
 		qDebug() << QString("m_findname:") << m_findname;
-		//ÅĞ¶Ïµ÷¸ß»¹ÊÇµ÷µÍ
+		//åˆ¤æ–­è°ƒé«˜è¿˜æ˜¯è°ƒä½
 		m_judge = judge_word(inputText);
 		qDebug() << QString("m_judge:") << m_judge;
 	}
 	else {
-		// Èç¹û¶¼Ã»ÓĞÊäÈë£¬¿ÉÒÔÌáÊ¾ÓÃ»§
+		// å¦‚æœéƒ½æ²¡æœ‰è¾“å…¥ï¼Œå¯ä»¥æç¤ºç”¨æˆ·
 		qDebug() << "No input detected";
 	}
 	//m_findname = QString("130");
@@ -690,7 +736,7 @@ void new_record_stt::changeArguments()
 }
 
 void new_record_stt::adjustParameters(const QString& findname, int & judge) {
-	qDebug() << "findname in adjustParameters:" << findname; // µ÷ÊÔÊä³ö
+	qDebug() << "findname in adjustParameters:" << findname; // è°ƒè¯•è¾“å‡º
 	if (findname == QString("130")) {
 		on->setON(14);
 		off->setOFF(15);
@@ -739,6 +785,93 @@ void new_record_stt::adjustParameters(const QString& findname, int & judge) {
 	}
 }
 
+bool new_record_stt::applyParameters() {
+	return true;
+}
+
+bool new_record_stt::execute_Parameters() {
+	return true;
+}
+
+bool new_record_stt::saveToFile(const QString& filePath) {
+	// 1. æ‰“å¼€æ–‡ä»¶ï¼ˆè¿½åŠ æ¨¡å¼ + å†™å…¥æ¨¡å¼ + æ–‡æœ¬æ¨¡å¼ï¼‰
+// Appendï¼šè¿½åŠ ï¼ˆä¸è¦†ç›–ï¼‰ï¼›WriteOnlyï¼šå†™å…¥ï¼›Textï¼šæ–‡æœ¬æ¨¡å¼
+	QFile file(filePath);
+	if (!file.open(QIODevice::Append | QIODevice::WriteOnly | QIODevice::Text)) {
+		QMessageBox::critical(this, "é”™è¯¯", "æ— æ³•æ‰“å¼€æ–‡ä»¶ï¼š" + filePath);
+		return false;
+	}
+
+	QTextStream out(&file);
+	out.setEncoding(QStringConverter::Utf8);
+
+	// 2. å®šä¹‰åˆ—æ ‡ç­¾ï¼ˆå‚æ•°åç§°ï¼‰å’Œå¯¹åº”çš„æ•°å€¼
+	QList<QPair<QString, QString>> paramList;
+	// ===== å¡«å……æ‰€æœ‰å‚æ•°ï¼ˆé¡ºåºä¸å˜ï¼‰=====
+	paramList << QPair<QString, QString>("ON", QString::number(on->getON()));
+	paramList << QPair<QString, QString>("OFF", QString::number(off->getOFF(), 'f', 2));
+	paramList << QPair<QString, QString>("IP", QString::number(ip->getIP(), 'f', 2));
+	paramList << QPair<QString, QString>("PL", QString(pl->getPL()));  // charç±»å‹ç‰¹æ®Šå¤„ç†
+	paramList << QPair<QString, QString>("V", QString::number(v->getV()));
+	paramList << QPair<QString, QString>("HP", QString::number(hp->getHP()));
+	paramList << QPair<QString, QString>("PP", QString::number(pp->getPP()));
+	paramList << QPair<QString, QString>("AL", QString::number(al->getAL()));
+	paramList << QPair<QString, QString>("OC", QString::number(oc->getOC()));
+	paramList << QPair<QString, QString>("LD", QString::number(ld->getLD()));
+	paramList << QPair<QString, QString>("MU", QString::number(mu->getMU()));
+	paramList << QPair<QString, QString>("GAP", QString::number(gap->getGAP()));
+	paramList << QPair<QString, QString>("UP", QString::number(up->getUP()));
+	paramList << QPair<QString, QString>("DN", QString::number(dn->getDN()));
+	paramList << QPair<QString, QString>("CA", QString::number(ca->getCA()));
+	paramList << QPair<QString, QString>("S", QString::number(s->getS()));
+	paramList << QPair<QString, QString>("LN", QString::number(ln->getLN()));
+	paramList << QPair<QString, QString>("STEP", QString::number(step->getSTEP()));
+	paramList << QPair<QString, QString>("L", QString::number(l->getL()));
+	paramList << QPair<QString, QString>("MyLP", QString::number(mylp->getLP()));
+	QString electrodeMaterial = ui.m_Electrode_material->currentText();
+	paramList << QPair<QString, QString>(QString("ç”µæææ–™"), electrodeMaterial);
+	QString workpieceMaterial = ui.m_Workpiece_Material->currentText();
+	paramList << QPair<QString, QString>(QString("å·¥ä»¶ææ–™"), workpieceMaterial);
+	QString projectedArea = ui.m_Projected_Area->currentText();
+	paramList << QPair<QString, QString>(QString("æŠ•å½±é¢ç§¯"), projectedArea);
+	paramList << QPair<QString, QString>(QString("åŠ å·¥é€Ÿåº¦(mmÂ³/min)"), QString::number(ui.m_Processing_Speed->value()));
+	paramList << QPair<QString, QString>(QString("è¡¨é¢ç²—ç³™åº¦(Î¼Rmax)"), QString::number(ui.m_Surface_Roughness->value()));
+	paramList << QPair<QString, QString>(QString("ç”µææ¶ˆè€—æ¯”(E/WÃ—100%)"), QString::number(ui.m_Electrode_Consumption_Radio->value()));
+	paramList << QPair<QString, QString>(QString("\"åŠ å·¥é—´éš™(Î¼m,Î²)\""), QString::number(ui.m_Machining_Allowance->value()));
+
+
+
+	// 3. åˆ¤æ–­æ˜¯å¦æ˜¯é¦–æ¬¡åˆ›å»ºæ–‡ä»¶ï¼ˆæ–‡ä»¶ä¸ºç©º/æ–°æ–‡ä»¶ï¼‰ï¼Œä»…é¦–æ¬¡å†™åˆ—æ ‡ç­¾
+	bool isNewFile = (file.size() == 0); // æ–‡ä»¶å¤§å°ä¸º0 = é¦–æ¬¡åˆ›å»º
+	if (isNewFile) {
+		// é¦–æ¬¡ä¿å­˜ï¼šå†™å…¥åˆ—æ ‡ç­¾ï¼ˆç¬¬ä¸€è¡Œï¼‰
+		QString headerLine;
+		for (int i = 0; i < paramList.size(); ++i) {
+			headerLine += paramList[i].first;
+			if (i != paramList.size() - 1) {
+				headerLine += ",";  // CSVåˆ—åˆ†éš”ç¬¦
+			}
+		}
+		out << headerLine << "\n";  // æ¢è¡Œ
+	}
+
+	// 4. å†™å…¥å‚æ•°æ•°å€¼ï¼ˆè¿½åŠ è¡Œï¼Œæ¯æ¬¡ä¿å­˜æ–°å¢ä¸€è¡Œï¼‰
+	QString valueLine;
+	for (int i = 0; i < paramList.size(); ++i) {
+		valueLine += paramList[i].second;
+		if (i != paramList.size() - 1) {
+			valueLine += ",";
+		}
+	}
+	out << valueLine << "\n";
+
+	// 5. å…³é—­æ–‡ä»¶
+	file.close();
+
+	QMessageBox::information(this, "æˆåŠŸ", "å‚æ•°å·²è¿½åŠ ä¿å­˜åˆ°ï¼š" + filePath);
+	return true;
+}
+
 new_record_stt::~new_record_stt()
 {
 	if (m_micThread->isRunning()) {
@@ -749,8 +882,46 @@ new_record_stt::~new_record_stt()
 	delete on;
 	delete off;
 	delete ip;
+	delete pl;
 	delete v;
+	delete hp;
+	delete pp;
+	delete al;
+	delete oc;
+	delete ld;
 	delete mu;
+	delete gap;
+	delete up;
+	delete dn;
+	delete ca;
+	delete s;
+	delete ln;
+	delete step;
+	delete l;
+	delete mylp;
+
+	// é‡Šæ”¾åç½®ç©ºï¼Œé¿å…é‡æŒ‡é’ˆ
+	m_micThread = nullptr;
+	on = nullptr;
+	off = nullptr;
+	ip = nullptr;
+	pl = nullptr;
+	v = nullptr;
+	hp = nullptr;
+	pp = nullptr;
+	al = nullptr;
+	oc = nullptr;
+	ld = nullptr;
+	mu = nullptr;
+	gap = nullptr;
+	up = nullptr;
+	dn = nullptr;
+	ca = nullptr;
+	s = nullptr;
+	ln = nullptr;
+	step = nullptr;
+	l = nullptr;
+	mylp = nullptr;
 	MSPLogout();
 }
 
