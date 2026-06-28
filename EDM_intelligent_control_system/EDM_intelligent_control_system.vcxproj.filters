@@ -23,13 +23,13 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <QtRcc Include="new_record_stt.qrc">
+    <QtRcc Include="EDM_intelligent_control_system.qrc">
       <Filter>Resource Files</Filter>
     </QtRcc>
-    <QtUic Include="new_record_stt.ui">
+    <QtUic Include="EDM_intelligent_control_system.ui">
       <Filter>Form Files</Filter>
     </QtUic>
-    <QtMoc Include="new_record_stt.h">
+    <QtMoc Include="EDM_intelligent_control_system.h">
       <Filter>Header Files</Filter>
     </QtMoc>
     <QtRcc Include="ui.qrc">
@@ -40,10 +40,7 @@
     <ClCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="new_record_stt.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="iat_online_record_sample.cpp">
+    <ClCompile Include="EDM_intelligent_control_system.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="speech_recognizer.c">
@@ -82,6 +79,11 @@
     </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.md" />
+    <None Include="README.md">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="update.md">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>
